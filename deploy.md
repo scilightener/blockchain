@@ -1,7 +1,7 @@
 # from zero to hero
 ### network:
 - brew install npm
-- mkdir amulet-gen && cd amulet-gen
+- cd amulet-generator
 - npm install --save-dev hardhat @nomiclabs/hardhat-ethers ethers dotenv web3
 - npx hardhat
 - touch files

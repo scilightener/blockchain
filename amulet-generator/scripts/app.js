@@ -1,4 +1,4 @@
-const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Адрес развернутого контракта
+const contractAddress = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6";
 const abi = [
   {
     "inputs": [],
@@ -24,12 +24,6 @@ const abi = [
         "indexed": false,
         "internalType": "uint256",
         "name": "power",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "magic",
         "type": "uint256"
       },
       {
@@ -86,11 +80,6 @@ const abi = [
           },
           {
             "internalType": "uint256",
-            "name": "magic",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
             "name": "rarity",
             "type": "uint256"
           }
@@ -98,6 +87,25 @@ const abi = [
         "internalType": "struct AmuletGenerator.Amulet[]",
         "name": "",
         "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      }
+    ],
+    "name": "getUserPower",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -132,6 +140,32 @@ const abi = [
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "amuletId",
+        "type": "uint256"
+      }
+    ],
+    "name": "upgradeAmulet",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "amuletId",
+        "type": "uint256"
+      }
+    ],
+    "name": "useAmulet",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "",
         "type": "address"
@@ -156,11 +190,6 @@ const abi = [
       },
       {
         "internalType": "uint256",
-        "name": "magic",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "rarity",
         "type": "uint256"
       }
@@ -169,10 +198,22 @@ const abi = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "withdraw",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "userPower",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ];
@@ -188,7 +229,6 @@ async function connectWallet() {
   }
 }
 
-// Инициализация контракта
 async function init() {
   try {
     if (typeof window.ethereum === "undefined") {
@@ -196,7 +236,6 @@ async function init() {
       return;
     }
 
-    // Проверяем, разрешено ли приложению подключаться
     const accounts = await window.ethereum.request({ method: "eth_accounts" });
     if (accounts.length === 0) {
       console.warn("No active wallet found. Requesting access...");
@@ -208,23 +247,26 @@ async function init() {
     contract = new ethers.Contract(contractAddress, abi, signer);
 
     console.log("MetaMask initialized successfully. Contract:", contractAddress);
+    getAmulets();
+    updateUserPower();
   } catch (error) {
     console.error("Error initializing MetaMask:", error);
   }
 }
 
-// Покупка амулета
 async function buyAmulet() {
   try {
     const tx = await contract.buyAmulet({ value: ethers.utils.parseEther("0.01") });
     await tx.wait();
     alert("Amulet purchased successfully!");
+    getAmulets();
+    updateUserPower();
   } catch (error) {
     console.error("Error buying amulet:", error);
+    alert("Failed to buy amulet");
   }
 }
 
-// Получение списка амулетов
 async function getAmulets() {
   try {
     if (!signer) {
@@ -234,31 +276,106 @@ async function getAmulets() {
     const address = await signer.getAddress();
     const amulets = await contract.getAmuletsByOwner(address);
 
-    // Форматирование вывода
-    const amuletList = amulets.map((amulet, index) => {
-      return `Amulet #${amulet.id}:\n  Power: ${amulet.power}\n  Magic: ${amulet.magic}\n  Rarity: ${amulet.rarity}\n`;
-    });
+    console.log(amulets)
+    let sortedAmulets = [...amulets]
+    sortedAmulets.sort((a, b) => (a.id.toString() >= b.id.toString())? 0 : -1);
 
-    document.getElementById("amuletsList").textContent = amuletList.join("\n");
+    const container = document.getElementById("amuletsList");
+    container.innerHTML = '';
+
+    sortedAmulets.forEach((amulet, index) => {
+      const amuletDiv = document.createElement('div');
+      amuletDiv.classList.add('amulet');
+
+      const amuletTitle = document.createElement('h3');
+      amuletTitle.textContent = `Amulet #${amulet.id}`;
+      amuletDiv.appendChild(amuletTitle);
+
+      const amuletDetails = document.createElement('ul');
+
+      const powerDetail = document.createElement('li');
+      powerDetail.textContent = `Power: ${amulet.power}`;
+      amuletDetails.appendChild(powerDetail);
+
+      const rarityDetail = document.createElement('li');
+      rarityDetail.textContent = `Rarity: ${amulet.rarity}`;
+      amuletDetails.appendChild(rarityDetail);
+
+      amuletDiv.appendChild(amuletDetails);
+
+      const buttonContainer = document.createElement('div');
+      buttonContainer.style.display = 'flex';
+      buttonContainer.style.alignItems = 'center';
+      buttonContainer.style.gap = '10px';
+      
+      const upgradeButton = document.createElement('button');
+      upgradeButton.textContent = 'Upgrade Amulet';
+      upgradeButton.onclick = async () => {
+        const ethAmount = prompt('Enter ETH amount to upgrade:');
+        if (ethAmount) {
+          await upgradeAmulet(amulet.id, ethAmount);
+        }
+      };
+      buttonContainer.appendChild(upgradeButton);
+
+      const useButton = document.createElement('button');
+      useButton.textContent = 'Use Amulet';
+      useButton.onclick = async () => {
+        await useAmulet(amulet.id);
+      };
+      buttonContainer.appendChild(useButton);
+      amuletDiv.appendChild(buttonContainer);
+      container.appendChild(amuletDiv);
+    });
   } catch (error) {
     console.error("Error fetching amulets:", error);
-    alert(error.message);
+    alert("Failed to get amulets");
   }
+}
+
+async function upgradeAmulet(amuletId, ethAmount) {
+  try {
+    const ethValue = ethers.utils.parseEther(ethAmount);
+    const tx = await contract.upgradeAmulet(amuletId, { value: ethValue });
+    await tx.wait();
+    alert(`Amulet ${amuletId} upgraded successfully!`);
+    getAmulets();
+  } catch (error) {
+    console.error("Error upgrading amulet:", error);
+    alert("Failed to upgrade amulet");
+  }
+}
+
+async function useAmulet(amuletId) {
+  try {
+    const tx = await contract.useAmulet(amuletId);
+    await tx.wait();
+    alert(`Amulet ${amuletId} used successfully!`);
+    getAmulets();
+    updateUserPower();
+  } catch (error) {
+    console.error("Error using amulet:", error);
+    alert("Failed to use amulet");
+  }
+}
+
+async function updateUserPower() {
+  if (!signer) {
+    throw new Error("MetaMask не подключён. Пожалуйста, подключите MetaMask.");
+  }
+
+  const address = await signer.getAddress();
+  const userPower = await contract.getUserPower(address);
+  document.getElementById("userPower").textContent = "Your Power: " + userPower
 }
 
 window.onload = function () {
   document.getElementById("connectWalletBtn").addEventListener("click", connectWallet);
   const buyAmuletBtn = document.getElementById("buyAmuletBtn");
-  const getAmuletsBtn = document.getElementById("getAmuletsBtn");
 
   if (buyAmuletBtn) {
     buyAmuletBtn.addEventListener("click", buyAmulet);
   }
 
-  if (getAmuletsBtn) {
-    getAmuletsBtn.addEventListener("click", getAmulets);
-  }
-
-  // Инициализация приложения
   init();
 };

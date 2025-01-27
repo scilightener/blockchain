@@ -4,21 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Amulet Generator</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Amulet Generator Interface</h1>
-  <button id="connectWalletBtn">Connect Wallet</button>
-  <div>
-    <h2>Buy an Amulet</h2>
-    <button id="buyAmuletBtn">Buy Amulet (0.01 ETH)</button>
-  </div>
+  <header>
+    <h1>Amulet Generator Interface</h1>
+  </header>
+  <main>
+    <button id="connectWalletBtn">Connect Wallet</button>
+    <div class="section">
+      <h2>Buy an Amulet</h2>
+      <button id="buyAmuletBtn">Buy Amulet (0.01 ETH)</button>
+    </div>
 
-  <div>
-    <h2>Your Amulets</h2>
-    <button id="getAmuletsBtn">Get My Amulets</button>
-    <pre id="amuletsList"></pre>
-  </div>
+    <div class="section">
+      <h2 id="userPower">Your Power: 0</h2>
+    </div>
 
+    <div class="section">
+      <h2>Your Amulets</h2>
+      <pre id="amuletsList"></pre>
+    </div>
+  </main>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
   <script src="scripts/app.js"></script>
 </body>
